@@ -1,7 +1,9 @@
-import express, { response } from "express";
+import express from "express";
 import { MongoClient } from "mongodb";
 import cors from 'cors';
-import { request } from "express";
+import dotenv from "dotenv";
+dotenv.config();
+console.log(process.env);
 
 
 const app = express();
@@ -94,7 +96,8 @@ app.use(express.json());
 //   },
 // ];
 
-const MONGO_URL="mongodb://localhost";
+// const MONGO_URL="mongodb://localhost";
+const MONGO_URL=process.env.MONGO_URL;
 async function createConnection(){
   const client= new MongoClient(MONGO_URL);
   await client.connect();
@@ -111,10 +114,7 @@ app.get("/", (request, response) => {
 app.get("/golds/:id",async (request, response) => {
   console.log(request.params);
   const { id } = request.params;
-  const gold= await client
-  .db("gold-calculator")
-  .collection("golds")
-  .findOne({id:id});
+  const gold= await getGoldsById(id);
   console.log(gold);
   gold
     ? response.send(gold)
@@ -123,24 +123,74 @@ app.get("/golds/:id",async (request, response) => {
 
 app.post("/golds",async(request,response)=>{
   const data=request.body;
-  const result=await client.db("gold-calculator").collection("golds").insertMany(data);
+  const result=await createGolds(data);
   response.send(result);
 })
 
 app.get("/golds", async(request, response) => {
   console.log(request.query);
-  const { weight, availability } = request.query;
-  
-  // let filterGolds = golds;
+  const filter=request.query;
+  console.log(filter);
 
-  // if (weight) {
-  //   filterGolds = filterGolds.filter((gd) => gd.weight === weight);
-  // }
-  // if (availability) {
-  //   filterGolds = filterGolds.filter((gd) => gd.availability === availability);
-  // }
-const filterGolds= await client.db("gold-calculator").collection("golds").find({}).toArray();
+  
+const filterGolds= await getGolds(filter);
   response.send(filterGolds);
 });
 
+app.delete("/golds/:id",async(request,response)=>{
+  console.log(request.params);
+  const{id}=request.params;
+const result= await deleteGoldsById(id);
+result.deletedCount > 0
+? response.send(result)
+: response.status(404).send({message:"No matching golds found"})
+});
+
+
+app.put("/golds/:id",async(request,response)=>{
+  console.log(request.params);
+  const{id}=request.params;
+  const data=request.body;
+const result= await updateGoldById(id, data);
+const gold=await getGoldsById(id);
+response.send(gold);
+})
+
+
+
 app.listen(PORT, () => console.log("App is started in", PORT));
+
+
+async function updateGoldById(id, data) {
+  return await client
+    .db("gold-calculator")
+    .collection("golds")
+    .updateOne({ id: id }, { $set: data });
+}
+
+async function createGolds(data) {
+  return await client.db("gold-calculator").collection("golds").insertMany(data);
+}
+
+async function getGolds(filter) {
+  return await client
+  .db("gold-calculator")
+  .collection("golds")
+  .find(filter)
+  .toArray();
+}
+
+async function deleteGoldsById(id) {
+  return await client
+    .db("gold-calculator")
+    .collection("golds")
+    .deleteOne({ id: id });
+}
+
+async function getGoldsById(id) {
+  return await client
+    .db("gold-calculator")
+    .collection("golds")
+    .findOne({ id: id });
+}
+
