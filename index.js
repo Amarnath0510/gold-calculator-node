@@ -2,6 +2,7 @@ import express from "express";
 import { MongoClient } from "mongodb";
 import cors from 'cors';
 import dotenv from "dotenv";
+import { getGoldsById, createGolds, getGolds, deleteGoldsById, updateGoldById } from "./helper.js";
 dotenv.config();
 console.log(process.env);
 
@@ -97,7 +98,7 @@ app.use(express.json());
 // ];
 
 // const MONGO_URL="mongodb://localhost";
-const MONGO_URL=process.env.MONGO_URL;
+const MONGO_URL=process.env.MONGO_URL; 
 async function createConnection(){
   const client= new MongoClient(MONGO_URL);
   await client.connect();
@@ -105,92 +106,17 @@ async function createConnection(){
   return  client;
 
 }
-const client= await createConnection() ;
+export const client= await createConnection() ;
 
 app.get("/", (request, response) => {
   response.send("Hello all welcome  to Gold-Calculator-server's palace");
 });
 
-app.get("/golds/:id",async (request, response) => {
-  console.log(request.params);
-  const { id } = request.params;
-  const gold= await getGoldsById(id);
-  console.log(gold);
-  gold
-    ? response.send(gold)
-    : response.status(404).send({ message: "No matching golds found" });
-});
-
-app.post("/golds",async(request,response)=>{
-  const data=request.body;
-  const result=await createGolds(data);
-  response.send(result);
-})
-
-app.get("/golds", async(request, response) => {
-  console.log(request.query);
-  const filter=request.query;
-  console.log(filter);
-
-  
-const filterGolds= await getGolds(filter);
-  response.send(filterGolds);
-});
-
-app.delete("/golds/:id",async(request,response)=>{
-  console.log(request.params);
-  const{id}=request.params;
-const result= await deleteGoldsById(id);
-result.deletedCount > 0
-? response.send(result)
-: response.status(404).send({message:"No matching golds found"})
-});
-
-
-app.put("/golds/:id",async(request,response)=>{
-  console.log(request.params);
-  const{id}=request.params;
-  const data=request.body;
-const result= await updateGoldById(id, data);
-const gold=await getGoldsById(id);
-response.send(gold);
-})
+app.use("/golds",goldsRouter)
 
 
 
 app.listen(PORT, () => console.log("App is started in", PORT));
 
 
-async function updateGoldById(id, data) {
-  return await client
-    .db("gold-calculator")
-    .collection("golds")
-    .updateOne({ id: id }, { $set: data });
-}
-
-async function createGolds(data) {
-  return await client.db("gold-calculator").collection("golds").insertMany(data);
-}
-
-async function getGolds(filter) {
-  return await client
-  .db("gold-calculator")
-  .collection("golds")
-  .find(filter)
-  .toArray();
-}
-
-async function deleteGoldsById(id) {
-  return await client
-    .db("gold-calculator")
-    .collection("golds")
-    .deleteOne({ id: id });
-}
-
-async function getGoldsById(id) {
-  return await client
-    .db("gold-calculator")
-    .collection("golds")
-    .findOne({ id: id });
-}
 
