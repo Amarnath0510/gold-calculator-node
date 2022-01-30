@@ -1,10 +1,11 @@
 import { client } from "./index.js";
+import {ObjectId} from "mongodb";
 
  async function updateGoldById(id, data) {
   return await client
     .db("gold-calculator")
     .collection("golds")
-    .updateOne({ id: id }, { $set: data });
+    .updateOne({ _id: ObjectId(id) }, { $set: data });
 }
  async function createGolds(data) {
   return await client
@@ -23,13 +24,13 @@ import { client } from "./index.js";
   return await client
     .db("gold-calculator")
     .collection("golds")
-    .deleteOne({ id: id });
+    .deleteOne({ _id: ObjectId(id) });
 }
  async function getGoldsById(id) {
   return await client
     .db("gold-calculator")
     .collection("golds")
-    .findOne({ id: id });
+    .findOne({ _id: ObjectId(id) });
 }
 export
 {
