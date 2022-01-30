@@ -26,7 +26,7 @@ async function createConnection(){
 export const client= await createConnection() ;
 
 app.get("/", (request, response) => {
-  response.send("Hello all welcome  to Gold-Calculator-server's palace");
+  response.send("Hello all welcome ✌✌ to Gold-Calculator-server's palace");
 });
 
 app.use("/golds",goldsRouter)
